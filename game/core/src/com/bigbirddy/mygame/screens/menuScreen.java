@@ -33,7 +33,6 @@ public class menuScreen implements Screen {
 	final float play_button_y = 350;
 	
 	
-	
     /***********/
 	/*methods*/
 	/***********/

@@ -1,5 +1,7 @@
 package com.bigbirddy.mygame.screens;
 
+import java.util.ArrayList;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Input.Keys;
@@ -8,6 +10,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.bigbirddy.mygame.myGame;
+import com.bigbirddy.mygame.entities.bullet;
 
 public class GameScreen implements Screen{
 	
@@ -33,8 +36,14 @@ public class GameScreen implements Screen{
 	TextureRegion[][] rollSpriteSheet;
     float frame_speed;
     float state_time;
-    float rolling_state_time;
-    float rolling_check_time;
+    float rolling_state_time = 0;
+    float rolling_check_time = 0;
+    float idle_state_time;
+    float idle_check_time;
+    
+    //bullet container
+    ArrayList<bullet> bullet_arrayList;
+    
 
 	
 	/***********/
@@ -63,8 +72,10 @@ public class GameScreen implements Screen{
 		rolls[3] = new Animation(frame_speed, rollSpriteSheet[3]);
 		rolls[4] = new Animation(frame_speed, rollSpriteSheet[4]);
 		rolling_check_time = 0.15f;
+		idle_check_time = 0.06f;
 		
-		
+		bullet_arrayList = new ArrayList<bullet>();
+
 		
 	}
 	
@@ -93,7 +104,8 @@ public class GameScreen implements Screen{
 				rolling_state_time = 0;
 			}
 			
-		}
+		} 
+		
 		
 		//if the right-arrow key is pressed
 		if(Gdx.input.isKeyPressed(Keys.RIGHT)) {
@@ -109,14 +121,43 @@ public class GameScreen implements Screen{
 				if(roll <= 3) roll++;
 				rolling_state_time = 0;
 			}
-			
+	
+		} 
+		
+		//balance the ship if tilted 
+		if(!Gdx.input.isKeyPressed(Keys.LEFT) && !Gdx.input.isKeyPressed(Keys.RIGHT)) {
+			idle_state_time += Gdx.graphics.getDeltaTime();
+			if (Math.abs(idle_state_time) > idle_check_time) {
+				//if tilted right, balance toward left
+				if(roll > 2) roll--;
+				if(roll < 2) roll++;
+				idle_state_time = 0;
+			}
 		}
+		
+		//if the spacebar is pressed, create the bullets
+		if(Gdx.input.isKeyPressed(Keys.SPACE)) {
+			bullet_arrayList.add(new bullet(x + 4));
+			bullet_arrayList.add(new bullet(x - 4 + ship_actual_width));
+		}
+		
+		for (bullet b : bullet_arrayList) {
+			b.update(delta);
+		}
+		
 		
 		Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		
 		state_time += delta;
 		game.batch.begin();
+		
+		//update and render the bullets
+		for (bullet b : bullet_arrayList) {
+			b.render(game.batch);
+		}
+				
+
 		//makes the ship trembled
 		game.batch.draw(rolls[roll].getKeyFrame(state_time, true), x, y, ship_actual_width, ship_actual_height);
 		game.batch.end();
