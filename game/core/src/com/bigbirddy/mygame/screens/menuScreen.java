@@ -14,6 +14,8 @@ public class menuScreen implements Screen {
 	
 	//to get myGame's object
 	myGame game;
+	//to get gameScreen
+	GameScreen gameScreen;
 	
 	//create button textures
 	Texture exitButtonActive;
@@ -38,8 +40,9 @@ public class menuScreen implements Screen {
 	/***********/
 	
 	//constructor
-	public menuScreen(myGame game) {
+	public menuScreen(myGame game, GameScreen gameScreen) {
 		this.game = game;
+		this.gameScreen = gameScreen;
 		exitButtonActive = new Texture("exit_button_active.png");
 		exitButtonInactive = new Texture("exit_button_inactive.png");
 		playButtonActive = new Texture("play_button_active.png");
@@ -80,7 +83,7 @@ public class menuScreen implements Screen {
 				game.batch.draw(playButtonActive, play_button_x, play_button_y, play_button_width, play_button_height);
 				
 				if (Gdx.input.isTouched()) {
-					game.setScreen(new GameScreen(game));
+					game.setScreen(gameScreen);
 					this.dispose();
 				}
 				

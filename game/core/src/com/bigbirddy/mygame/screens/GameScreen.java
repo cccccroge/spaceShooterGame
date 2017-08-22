@@ -9,10 +9,15 @@ import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.bigbirddy.mygame.myGame;
 import com.bigbirddy.mygame.entities.bullet;
+import com.bigbirddy.mygame.entities.explosion;
+import com.bigbirddy.mygame.entities.healthBar;
 import com.bigbirddy.mygame.entities.rock;
+import com.bigbirddy.mygame.tools.collisionRect;
 
 public class GameScreen implements Screen{
 	
@@ -31,6 +36,8 @@ public class GameScreen implements Screen{
 	int ship_unit_height;
 	int ship_actual_width;
 	int ship_actual_height;
+	collisionRect ship_rect;
+	healthBar ship_healthBar;
 	
 	//ship animations
 	Animation[] rolls;
@@ -46,17 +53,23 @@ public class GameScreen implements Screen{
     //entities container
     ArrayList<bullet> bullet_arrayList;
     ArrayList<rock> rock_arrayList;
+    ArrayList<explosion> explosion_arrayList;
     
     //bullet burst limitation
     float shoot_state_time = 0;
     float shoot_check_time;
     
-    //rock time settings
+    //rock properties
     float random_generateRock_timer;
     float MIN_generateRock_time;
     float MAX_generateRock_time;
     Random random;
-
+    int rock_eliminatedPoint;
+    float rock_damage; //0~1
+    
+    //text and font
+    BitmapFont scoreFont;
+    int scorePoints;
 	
 	/***********/
 	/*methods*/
@@ -65,13 +78,15 @@ public class GameScreen implements Screen{
 	//constructor
 	public GameScreen(myGame game) {
 		y = 15;
-		x = game.window_width / 2 - ship_unit_width / 2;
+		x = Gdx.graphics.getWidth() / 2 - ship_actual_width / 2;
 		this.game = game;
 		ship_speed = 350;
 		ship_unit_width = 17;
 		ship_unit_height = 32;
 		ship_actual_width = ship_unit_width * 3;
 		ship_actual_height = ship_unit_width * 3;
+		ship_rect = new collisionRect(x, y, ship_actual_width, ship_actual_height);
+		ship_healthBar = new healthBar();
 				
 		roll = 2;
 		rolls = new Animation[5];
@@ -85,7 +100,7 @@ public class GameScreen implements Screen{
 		rolls[4] = new Animation(frame_speed, rollSpriteSheet[4]);
 		rolling_check_time = 0.15f;
 		idle_check_time = 0.06f;
-		shoot_check_time = 0.2f;
+		shoot_check_time = 0.175f;
 		
 		bullet_arrayList = new ArrayList<bullet>();
 
@@ -95,6 +110,13 @@ public class GameScreen implements Screen{
 		random = new Random();
 		random_generateRock_timer = MIN_generateRock_time + random.nextFloat() * (MAX_generateRock_time - MIN_generateRock_time);
 		rock_arrayList = new ArrayList<rock>();
+		rock_eliminatedPoint = 100;
+		rock_damage = 0.2f;
+		
+		explosion_arrayList = new ArrayList<explosion>();
+		
+		scoreFont = new BitmapFont(Gdx.files.internal("fonts/score.fnt"));
+		scorePoints = 0;
 	}
 	
 	@Override
@@ -105,7 +127,11 @@ public class GameScreen implements Screen{
 	
 	@Override
 	public void render(float delta) {
-
+		
+		/********/
+		/*inputs*/
+		/********/
+		
 		//left-arrow key
 		if(Gdx.input.isKeyPressed(Keys.LEFT)) {
 			
@@ -167,7 +193,14 @@ public class GameScreen implements Screen{
 			shoot_state_time = 0;
 		}
 		
-		//update the bullet status and remove deads
+		/*********/
+		/*updates*/
+		/*********/
+		
+		//update ship
+		ship_rect.move(x, y);
+		
+		//update the bullet
 		ArrayList<bullet> bulletToRemove_arrayList = new ArrayList<bullet>();
 		for (bullet b : bullet_arrayList) {
 			if (!b.alive) {
@@ -177,49 +210,84 @@ public class GameScreen implements Screen{
 			b.bullet_rect.move(b.bullet_x, b.bullet_y);
 		}
 		
-
-		//run the rock generate timer, if it set to 0, create a rock
+		//create rocks randomly
 		random_generateRock_timer -= delta;
 		if(random_generateRock_timer <= 0) {
 			Random random = new Random();
-			rock_arrayList.add(new rock(random.nextInt(Gdx.graphics.getWidth() - ship_actual_width)));
+			rock_arrayList.add(new rock(random.nextInt(Gdx.graphics.getWidth() - 32)));
 			random_generateRock_timer = MIN_generateRock_time + random.nextFloat() * (MAX_generateRock_time - MIN_generateRock_time);
 		}
-		//update rock status
+		//update rock
 		for (rock r : rock_arrayList) {
 			r.update(delta);
 			r.rock_rect.move(r.rock_x, r.rock_y);
 		}
 		
-		//collision event
-		//1.bullet hit rock, remove both
+		//bullet hit rock, remove both, explode, add score
 		ArrayList<rock> rockToRemove_arrayList = new ArrayList<rock>();
 		for (bullet b : bullet_arrayList) {
 			for (rock r : rock_arrayList) {
 				if(b.bullet_rect.collideWith(r.rock_rect)) {
 					bulletToRemove_arrayList.add(b);
 					rockToRemove_arrayList.add(r);
+					explosion_arrayList.add(new explosion(r.rock_x, r.rock_y));
+					scorePoints += rock_eliminatedPoint;
 				}
+			}
+		}
+		
+		//rock hit ship, explode, substract healthRate
+		for (rock r : rock_arrayList) {
+			if(r.rock_rect.collideWith(ship_rect)) {
+				rockToRemove_arrayList.add(r);
+				explosion_arrayList.add(new explosion(r.rock_x, r.rock_y));
+				ship_healthBar.healtRate -= rock_damage;
 			}
 		}
 		bullet_arrayList.removeAll(bulletToRemove_arrayList);
 		rock_arrayList.removeAll(rockToRemove_arrayList);
 		
+		//update explosion
+		ArrayList<explosion> explosionToRemove = new ArrayList<explosion>();
+		for(explosion e : explosion_arrayList) {
+			e.update(delta);
+			if(e.finished) {
+				explosionToRemove.add(e);
+			}
+		}
+		explosion_arrayList.removeAll(explosionToRemove);
+		
+		//ship is dead
+		if(ship_healthBar.healtRate <= 0)
+			game.setScreen(new gameOverScreen(game, scorePoints));
+		
+		/********/
+		/*render*/
+		/********/
+		
 		//render the entities
 		Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		
 		game.batch.begin();
+		
 		for (bullet b : bullet_arrayList) {
 			b.render(game.batch);
 		}
 		for (rock r : rock_arrayList) {
 			r.render(game.batch);
 		}
+		for (explosion e : explosion_arrayList) {
+			e.render(game.batch);  
+		}
+		
+		//render UI
+		GlyphLayout scoreLayout = new GlyphLayout(scoreFont, "" + scorePoints);
+		scoreFont.draw(game.batch, scoreLayout, Gdx.graphics.getWidth() / 2 - scoreLayout.width / 2, Gdx.graphics.getHeight() - 50);
+		ship_healthBar.render(game.batch);
 		
 		//makes the ship trembled
 		state_time += delta;
-		game.batch.draw(rolls[roll].getKeyFrame(state_time, true), x, y, ship_actual_width, ship_actual_height);
+		game.batch.draw(rolls[roll].getKeyFrame(state_time, false), x, y, ship_actual_width, ship_actual_height);
 		game.batch.end();
 		
 	}
