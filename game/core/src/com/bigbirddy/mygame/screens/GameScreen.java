@@ -84,7 +84,11 @@ public class GameScreen implements Screen{
 		ship_unit_width = 17;
 		ship_unit_height = 32;
 		ship_actual_width = ship_unit_width * 3;
+<<<<<<< HEAD
+		ship_actual_height = ship_unit_height * 3;
+=======
 		ship_actual_height = ship_unit_width * 3;
+>>>>>>> 098e684e88d56348d3fefc5e0e48124a4436b928
 		ship_rect = new collisionRect(x, y, ship_actual_width, ship_actual_height);
 		ship_healthBar = new healthBar();
 				
@@ -177,6 +181,7 @@ public class GameScreen implements Screen{
 				if(roll < 2) roll++;
 				idle_state_time = 0;
 			}
+<<<<<<< HEAD
 		}
 		
 		//spacebar : create the bullets
@@ -217,6 +222,48 @@ public class GameScreen implements Screen{
 			rock_arrayList.add(new rock(random.nextInt(Gdx.graphics.getWidth() - 32)));
 			random_generateRock_timer = MIN_generateRock_time + random.nextFloat() * (MAX_generateRock_time - MIN_generateRock_time);
 		}
+=======
+		}
+		
+		//spacebar : create the bullets
+		//also add a limitation to prevent burst
+		shoot_state_time += delta;
+		if(Gdx.input.isKeyPressed(Keys.SPACE) && shoot_state_time >= shoot_check_time) {
+			//depends on different rolls, shoot at different position
+			int offset = 4;
+			if(roll == 3 || roll == 1) offset = 8;
+			if(roll == 4 || roll == 0) offset = 16;
+			bullet_arrayList.add(new bullet(x + offset));
+			bullet_arrayList.add(new bullet(x - offset + ship_actual_width));
+			
+			shoot_state_time = 0;
+		}
+		
+		/*********/
+		/*updates*/
+		/*********/
+		
+		//update ship
+		ship_rect.move(x, y);
+		
+		//update the bullet
+		ArrayList<bullet> bulletToRemove_arrayList = new ArrayList<bullet>();
+		for (bullet b : bullet_arrayList) {
+			if (!b.alive) {
+				bulletToRemove_arrayList.add(b);
+			}
+			b.update(delta);
+			b.bullet_rect.move(b.bullet_x, b.bullet_y);
+		}
+		
+		//create rocks randomly
+		random_generateRock_timer -= delta;
+		if(random_generateRock_timer <= 0) {
+			Random random = new Random();
+			rock_arrayList.add(new rock(random.nextInt(Gdx.graphics.getWidth() - 32)));
+			random_generateRock_timer = MIN_generateRock_time + random.nextFloat() * (MAX_generateRock_time - MIN_generateRock_time);
+		}
+>>>>>>> 098e684e88d56348d3fefc5e0e48124a4436b928
 		//update rock
 		for (rock r : rock_arrayList) {
 			r.update(delta);
@@ -235,6 +282,7 @@ public class GameScreen implements Screen{
 				}
 			}
 		}
+<<<<<<< HEAD
 		
 		//rock hit ship, explode, substract healthRate
 		for (rock r : rock_arrayList) {
@@ -247,6 +295,20 @@ public class GameScreen implements Screen{
 		bullet_arrayList.removeAll(bulletToRemove_arrayList);
 		rock_arrayList.removeAll(rockToRemove_arrayList);
 		
+=======
+		
+		//rock hit ship, explode, substract healthRate
+		for (rock r : rock_arrayList) {
+			if(r.rock_rect.collideWith(ship_rect)) {
+				rockToRemove_arrayList.add(r);
+				explosion_arrayList.add(new explosion(r.rock_x, r.rock_y));
+				ship_healthBar.healtRate -= rock_damage;
+			}
+		}
+		bullet_arrayList.removeAll(bulletToRemove_arrayList);
+		rock_arrayList.removeAll(rockToRemove_arrayList);
+		
+>>>>>>> 098e684e88d56348d3fefc5e0e48124a4436b928
 		//update explosion
 		ArrayList<explosion> explosionToRemove = new ArrayList<explosion>();
 		for(explosion e : explosion_arrayList) {
@@ -258,8 +320,15 @@ public class GameScreen implements Screen{
 		explosion_arrayList.removeAll(explosionToRemove);
 		
 		//ship is dead
+<<<<<<< HEAD
+		if(ship_healthBar.healtRate <= 0.01f) {
+			game.setScreen(new gameOverScreen(game, scorePoints));
+			this.dispose();
+		}
+=======
 		if(ship_healthBar.healtRate <= 0)
 			game.setScreen(new gameOverScreen(game, scorePoints));
+>>>>>>> 098e684e88d56348d3fefc5e0e48124a4436b928
 		
 		/********/
 		/*render*/

@@ -14,8 +14,11 @@ public class menuScreen implements Screen {
 	
 	//to get myGame's object
 	myGame game;
+<<<<<<< HEAD
+=======
 	//to get gameScreen
 	GameScreen gameScreen;
+>>>>>>> 098e684e88d56348d3fefc5e0e48124a4436b928
 	
 	//create button textures
 	Texture exitButtonActive;
@@ -28,7 +31,11 @@ public class menuScreen implements Screen {
 	final float exit_button_height = 150;
 	final float exit_button_x = 80;
 	final float exit_button_y = 200;
+<<<<<<< HEAD
+	//button properties for PLAY
+=======
 	//button properties for play
+>>>>>>> 098e684e88d56348d3fefc5e0e48124a4436b928
 	final float play_button_width = 300;
 	final float play_button_height = 150;
 	final float play_button_x = 80;
@@ -40,9 +47,14 @@ public class menuScreen implements Screen {
 	/***********/
 	
 	//constructor
+<<<<<<< HEAD
+	public menuScreen(myGame game) {
+		this.game = game;
+=======
 	public menuScreen(myGame game, GameScreen gameScreen) {
 		this.game = game;
 		this.gameScreen = gameScreen;
+>>>>>>> 098e684e88d56348d3fefc5e0e48124a4436b928
 		exitButtonActive = new Texture("exit_button_active.png");
 		exitButtonInactive = new Texture("exit_button_inactive.png");
 		playButtonActive = new Texture("play_button_active.png");
@@ -83,7 +95,12 @@ public class menuScreen implements Screen {
 				game.batch.draw(playButtonActive, play_button_x, play_button_y, play_button_width, play_button_height);
 				
 				if (Gdx.input.isTouched()) {
+<<<<<<< HEAD
+					game.gameScreen = new GameScreen(game);
+					game.setScreen(game.gameScreen);
+=======
 					game.setScreen(gameScreen);
+>>>>>>> 098e684e88d56348d3fefc5e0e48124a4436b928
 					this.dispose();
 				}
 				

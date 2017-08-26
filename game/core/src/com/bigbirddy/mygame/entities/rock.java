@@ -30,7 +30,11 @@ public class rock {
 	public rock (float x) {
 		rock_x = x;
 		rock_y = Gdx.graphics.getHeight();
+<<<<<<< HEAD
+		rock_speed = 500;
+=======
 		rock_speed = 179;
+>>>>>>> 098e684e88d56348d3fefc5e0e48124a4436b928
 		rock_texture = new Texture("asteroid.png");
 		alive = true;
 		rock_rect_width = 16;
